@@ -96,6 +96,11 @@ ${DIR}/dashboard/configure_kibana_dashboard.sh
 echo
 echo
 
+# Prometheus Stack
+
+echo -e "\nStarting Prometheus monitoring stack:"
+docker-compose up -d prometheus grafana node-exporter kafka-lag-exporter
+
 # Verify wikipedia.parsed topic is populated and schema is registered
 MAX_WAIT=60
 echo "Waiting up to $MAX_WAIT seconds for subject wikipedia.parsed-value (for topic wikipedia.parsed) to be registered in Schema Registry"

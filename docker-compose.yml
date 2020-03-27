@@ -12,11 +12,13 @@ services:
       ZOOKEEPER_SERVER_ID: 1
       ZOOKEEPER_CLIENT_PORT: 2181
       ZOOKEEPER_TICK_TIME: 2000
+      EXTRA_ARGS: -javaagent:/usr/share/jmx-exporter/jmx_prometheus_javaagent-0.12.0.jar=1234:/usr/share/jmx-exporter/zookeeper.yml
       KAFKA_OPTS: -Djava.security.auth.login.config=/etc/kafka/secrets/zookeeper_jaas.conf
                   -Dzookeeper.authProvider.1=org.apache.zookeeper.server.auth.SASLAuthenticationProvider
                   -DrequireClientAuthScheme=sasl
     volumes:
       - ./scripts/security:/etc/kafka/secrets
+      - ./scripts/prometheus/jmx-exporter/:/usr/share/jmx-exporter
 
   tools:
     image: cnfltraining/training-tools:5.4
@@ -57,6 +59,7 @@ services:
       - ./conf:/tmp/conf
       - ./scripts/helper:/tmp/helper
       - ./scripts/security:/etc/kafka/secrets
+      - ./scripts/prometheus/jmx-exporter/:/usr/share/jmx-exporter
     command: "bash -c 'if [ ! -f /etc/kafka/secrets/kafka.kafka1.keystore.jks ]; then echo \"ERROR: Did not find SSL certificates in /etc/kafka/secrets/ (did you remember to run ./scripts/start.sh instead of docker-compose up -d?)\" && exit 1 ; else /etc/confluent/docker/run ; fi'"
     ports:
       - 8091:8091
@@ -69,7 +72,7 @@ services:
       KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: INTERNAL:SASL_PLAINTEXT,TOKEN:SASL_SSL,SSL:SSL,CLEAR:PLAINTEXT
       KAFKA_INTER_BROKER_LISTENER_NAME: INTERNAL
       KAFKA_ADVERTISED_LISTENERS: INTERNAL://kafka1:9091,TOKEN://kafka1:10091,SSL://kafka1:11091,CLEAR://kafka1:12091
-      
+
       KAFKA_SUPER_USERS: User:admin;User:mds;User:superUser;User:ANONYMOUS
       KAFKA_LOG4J_LOGGERS: "kafka.authorizer.logger=INFO"
       KAFKA_LOG4J_ROOT_LOGLEVEL: INFO
@@ -128,7 +131,7 @@ services:
       KAFKA_LISTENER_NAME_TOKEN_SSL_PRINCIPAL_MAPPING_RULES: RULE:^CN=([a-zA-Z0-9.]*).*$$/$$1/ , DEFAULT
 
       KAFKA_ZOOKEEPER_SET_ACL: 'true'
-      
+
       # Schema Validation
       KAFKA_CONFLUENT_SCHEMA_REGISTRY_URL: https://schemaregistry:8085
       KAFKA_CONFLUENT_SCHEMA_REGISTRY_BASIC_AUTH_CREDENTIALS_SOURCE: USER_INFO
@@ -138,6 +141,7 @@ services:
       KAFKA_OPTS: -Djava.security.auth.login.config=/etc/kafka/secrets/broker_jaas.conf
                   -Djavax.net.ssl.trustStore=/etc/kafka/secrets/kafka.kafka1.truststore.jks
                   -Djavax.net.ssl.trustStorePassword=confluent
+                  -javaagent:/usr/share/jmx-exporter/jmx_prometheus_javaagent-0.12.0.jar=1234:/usr/share/jmx-exporter/kafka-broker.yml
 
       # MDS
       KAFKA_CONFLUENT_METADATA_TOPIC_REPLICATION_FACTOR: 2
@@ -189,6 +193,7 @@ services:
       - ./conf:/tmp/conf
       - ./scripts/helper:/tmp/helper
       - ./scripts/security:/etc/kafka/secrets
+      - ./scripts/prometheus/jmx-exporter/:/usr/share/jmx-exporter
     command: "bash -c 'if [ ! -f /etc/kafka/secrets/kafka.kafka2.keystore.jks ]; then echo \"ERROR: Did not find SSL certificates in /etc/kafka/secrets/ (did you remember to run ./scripts/start.sh instead of docker-compose up -d?)\" && exit 1 ; else /etc/confluent/docker/run ; fi'"
     ports:
       - 8092:8092
@@ -201,7 +206,7 @@ services:
       KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: INTERNAL:SASL_PLAINTEXT,TOKEN:SASL_SSL,SSL:SSL,CLEAR:PLAINTEXT
       KAFKA_INTER_BROKER_LISTENER_NAME: INTERNAL
       KAFKA_ADVERTISED_LISTENERS: INTERNAL://kafka2:9092,TOKEN://kafka2:10092,SSL://kafka2:11092,CLEAR://kafka2:12092
-      
+
       KAFKA_SUPER_USERS: User:admin;User:mds;User:superUser;User:ANONYMOUS
       KAFKA_LOG4J_LOGGERS: "kafka.authorizer.logger=INFO"
       KAFKA_LOG4J_ROOT_LOGLEVEL: INFO
@@ -260,7 +265,7 @@ services:
       KAFKA_LISTENER_NAME_TOKEN_SSL_PRINCIPAL_MAPPING_RULES: RULE:^CN=([a-zA-Z0-9.]*).*$$/$$1/ , DEFAULT
 
       KAFKA_ZOOKEEPER_SET_ACL: 'true'
-      
+
       # Schema Validation
       KAFKA_CONFLUENT_SCHEMA_REGISTRY_URL: https://schemaregistry:8085
       KAFKA_CONFLUENT_SCHEMA_REGISTRY_BASIC_AUTH_CREDENTIALS_SOURCE: USER_INFO
@@ -270,6 +275,7 @@ services:
       KAFKA_OPTS: -Djava.security.auth.login.config=/etc/kafka/secrets/broker_jaas.conf
                   -Djavax.net.ssl.trustStore=/etc/kafka/secrets/kafka.kafka2.truststore.jks
                   -Djavax.net.ssl.trustStorePassword=confluent
+                  -javaagent:/usr/share/jmx-exporter/jmx_prometheus_javaagent-0.12.0.jar=1234:/usr/share/jmx-exporter/kafka-broker.yml
 
       # MDS
       KAFKA_CONFLUENT_METADATA_TOPIC_REPLICATION_FACTOR: 2
@@ -325,6 +331,7 @@ services:
       - mi3:/usr/share/java/kafka-connect-replicator/
       - ./scripts/security:/etc/kafka/secrets
       - ./conf:/tmp/conf
+      - ./scripts/prometheus/jmx-exporter/:/tmp/jmx-exporter
     command: "bash -c 'sleep 10 && \
               cp /usr/share/java/kafka-connect-replicator/replicator-rest-extension-*.jar /etc/kafka-connect/jars/ && \
               /etc/confluent/docker/run'"
@@ -563,7 +570,7 @@ services:
       CONTROL_CENTER_STREAMS_SSL_KEY_PASSWORD: confluent
       CONTROL_CENTER_STREAMS_SSL_ENDPOINT_IDENTIFICATION_ALGORITHM: "HTTPS"
 
-      # HTTP and HTTPS to Control Center UI 
+      # HTTP and HTTPS to Control Center UI
       CONTROL_CENTER_REST_LISTENERS: http://0.0.0.0:9021,https://0.0.0.0:9022
       CONTROL_CENTER_REST_SSL_TRUSTSTORE_LOCATION: /etc/kafka/secrets/kafka.controlcenter.truststore.jks
       CONTROL_CENTER_REST_SSL_TRUSTSTORE_PASSWORD: confluent
@@ -589,10 +596,10 @@ services:
       # RBAC
       CONTROL_CENTER_REST_AUTHENTICATION_METHOD: BEARER
       PUBLIC_KEY_PATH: /tmp/conf/public.pem
-      
+
       CONFLUENT_METADATA_BASIC_AUTH_USER_INFO: controlcenterAdmin:controlcenterAdmin
       CONFLUENT_METADATA_BOOTSTRAP_SERVER_URLS: http://kafka1:8091,http://kafka2:8092
-      
+
       CONTROL_CENTER_STREAMS_SECURITY_PROTOCOL: SASL_SSL
       # The following configs are not required by C3 itself, but are required by cub to be able to connect to kafka to check if its ready
       # Seems like C3 would generate these configs when started, but cub runs before C3 starts, so it doesn't have access to these configs
@@ -748,7 +755,7 @@ services:
       KSQL_HOST_NAME: ksql-server
       KSQL_LISTENERS: http://0.0.0.0:8088
       KSQL_CACHE_MAX_BYTES_BUFFERING: 0
-      
+
       KSQL_KSQL_SECURITY_EXTENSION_CLASS: io.confluent.ksql.security.KsqlConfluentSecurityExtension
 
       # Enable KSQL OAuth authentication
@@ -792,7 +799,7 @@ services:
 
       # Confluent Monitoring Interceptors for Control Center streams monitoring
       KSQL_PRODUCER_INTERCEPTOR_CLASSES: "io.confluent.monitoring.clients.interceptor.MonitoringProducerInterceptor"
-      KSQL_CONSUMER_INTERCEPTOR_CLASSES: "io.confluent.monitoring.clients.interceptor.MonitoringConsumerInterceptor"    
+      KSQL_CONSUMER_INTERCEPTOR_CLASSES: "io.confluent.monitoring.clients.interceptor.MonitoringConsumerInterceptor"
       KSQL_CONFLUENT_MONITORING_INTERCEPTOR_SSL_TRUSTSTORE_LOCATION: /etc/kafka/secrets/kafka.ksqlserver.truststore.jks
       KSQL_CONFLUENT_MONITORING_INTERCEPTOR_SSL_TRUSTSTORE_PASSWORD: confluent
       KSQL_CONFLUENT_MONITORING_INTERCEPTOR_SSL_KEYSTORE_LOCATION: /etc/kafka/secrets/kafka.ksqlserver.keystore.jks
@@ -866,7 +873,7 @@ services:
 
       # Credentials and classpath for cub kafka-ready
       CUB_CLASSPATH: '/etc/confluent/docker/docker-utils.jar:/usr/share/java/confluent-security/kafka-rest/*:/usr/share/java/kafka-rest/*'
-      
+
       KAFKA_REST_CLIENT_SECURITY_PROTOCOL: SASL_SSL
       KAFKA_REST_CLIENT_SASL_MECHANISM: OAUTHBEARER
       KAFKA_REST_CLIENT_SASL_LOGIN_CALLBACK_HANDLER_CLASS: io.confluent.kafka.clients.plugins.auth.token.TokenUserLoginCallbackHandler
@@ -916,6 +923,47 @@ services:
       - ./env_files/streams-demo.env
     environment:
       KAFKA_REPLICATION_FACTOR: 2
+
+  # Prometheus Stack
+
+  prometheus:
+    image: prom/prometheus:v2.11.1
+    ports:
+      - 9090:9090
+    volumes:
+      - ./scripts/prometheus/prometheus-config/:/etc/prometheus/
+
+  # System monitoring
+  node-exporter:
+    image: prom/node-exporter:v0.18.1
+    volumes:
+      - /proc:/host/proc:ro
+      - /sys:/host/sys:ro
+      - /:/rootfs:ro
+    command:
+      - '--path.procfs=/host/proc'
+      - '--path.sysfs=/host/sys'
+      - '--collector.filesystem.ignored-mount-points'
+      - '^(aufs|proc|nsfs|shm|cgroup|tmpfs|binfmt_misc|debugfs|devpts|fusectl|hugetlbfs|fuse.lxcfs|mqueue|pstore|securityfs|sysfs|autofs|devtmpfs|configfs)'
+
+  kafka-lag-exporter:
+    image: lightbend/kafka-lag-exporter:0.5.5
+    hostname: kafka-lag-exporter
+    restart: always
+    ports:
+      - 9999:9999
+    volumes:
+      - ./scripts/prometheus/kafka-lag-exporter/application.conf:/opt/docker/conf/application.conf
+      - ./scripts/prometheus/kafka-lag-exporter/logback.xml:/opt/docker/conf/logback.xml
+
+  grafana:
+    image: grafana/grafana:6.6.2
+    environment:
+      GF_INSTALL_PLUGINS: grafana-piechart-panel
+    ports:
+      - 3000:3000
+    volumes:
+      - ./scripts/prometheus/grafana/provisioning/:/etc/grafana/provisioning/
 
 volumes:
     mi3: {}
