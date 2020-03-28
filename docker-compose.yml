@@ -950,8 +950,6 @@ services:
     image: lightbend/kafka-lag-exporter:0.5.5
     hostname: kafka-lag-exporter
     restart: always
-    ports:
-      - 9999:9999
     volumes:
       - ./scripts/prometheus/kafka-lag-exporter/application.conf:/opt/docker/conf/application.conf
       - ./scripts/prometheus/kafka-lag-exporter/logback.xml:/opt/docker/conf/logback.xml
