@@ -28,6 +28,7 @@ KSQL_SERVER="User:ksqlserver"
 C3_ADMIN="User:controlcenterAdmin"
 CLIENT_PRINCIPAL="User:appSA"
 LISTEN_PRINCIPAL="User:clientListen"
+KAFKA_LAG_EXPORTER="User:kafkaLagExporter"
 
 mds_login $MDS_URL ${SUPER_USER} ${SUPER_USER_PASSWORD} || exit 1
 
@@ -89,13 +90,13 @@ confluent iam rolebinding create \
 
 # ResourceOwner for groups and topics on broker
 declare -a ConnectResources=(
-    "Topic:connect-configs" 
-    "Topic:connect-offsets" 
-    "Topic:connect-statuses" 
-    "Group:connect-cluster" 
+    "Topic:connect-configs"
+    "Topic:connect-offsets"
+    "Topic:connect-statuses"
+    "Group:connect-cluster"
     "Topic:_confluent-monitoring"
     "Topic:_confluent-secrets"
-    "Group:secret-registry" 
+    "Group:secret-registry"
 )
 for resource in ${ConnectResources[@]}
 do
@@ -401,7 +402,7 @@ confluent iam rolebinding create \
     --kafka-cluster-id $KAFKA_CLUSTER_ID \
     --schema-registry-cluster-id $SR
 
-################################### Listen Client ###################################
+############################## Listen Client ###################################
 echo "Creating role bindings for the listen client application"
 
 confluent iam rolebinding create \
@@ -455,6 +456,13 @@ confluent iam rolebinding create \
     --kafka-cluster-id $KAFKA_CLUSTER_ID \
     --schema-registry-cluster-id $SR
 
+################################### Kafka Lag Exporter ###################################
+echo "Creating role bindings for kafka lag exporter"
+confluent iam rolebinding create \
+    --principal $KAFKA_LAG_EXPORTER \
+    --role SystemAdmin \
+    --kafka-cluster-id $KAFKA_CLUSTER_ID
+
 ######################### Print #########################
 
 echo "Cluster IDs:"
@@ -477,6 +485,5 @@ echo "    KSQL User: $KSQL_USER"
 echo "    C3 Admin: $C3_ADMIN"
 echo "    Client service account: $CLIENT_PRINCIPAL"
 echo "    Listen Client service account: $LISTEN_PRINCIPAL"
+echo "    Kafka Lag Exporter service account: $KAFKA_LAG_EXPORTER"
 echo
-
-

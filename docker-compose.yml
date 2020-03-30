@@ -951,8 +951,8 @@ services:
     hostname: kafka-lag-exporter
     restart: always
     volumes:
-      - ./scripts/prometheus/kafka-lag-exporter/application.conf:/opt/docker/conf/application.conf
-      - ./scripts/prometheus/kafka-lag-exporter/logback.xml:/opt/docker/conf/logback.xml
+      - ./scripts/prometheus/kafka-lag-exporter:/opt/docker/conf
+      - ./scripts/security:/etc/kafka/secrets
 
   grafana:
     image: grafana/grafana:6.6.2
