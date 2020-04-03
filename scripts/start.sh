@@ -70,7 +70,7 @@ if [[ $(docker-compose logs connect) =~ "server returned information about unkno
 fi
 
 # Verify Kafka Connect Worker has started
-MAX_WAIT=120
+MAX_WAIT=300
 echo "Waiting up to $MAX_WAIT seconds for Connect to start"
 retry $MAX_WAIT host_check_connect_up || exit 1
 
@@ -95,11 +95,6 @@ echo -e "\nConfigure Kibana dashboard:"
 ${DIR}/dashboard/configure_kibana_dashboard.sh
 echo
 echo
-
-# Prometheus Stack
-
-echo -e "\nStarting Prometheus monitoring stack:"
-docker-compose up -d prometheus grafana node-exporter kafka-lag-exporter
 
 # Verify wikipedia.parsed topic is populated and schema is registered
 MAX_WAIT=60
@@ -134,3 +129,10 @@ ${DIR}/helper/control-center-modifications.sh
 echo -e "\n\n\n*****************************************************************************************************************"
 echo -e "DONE! Connect to Confluent Control Center at http://localhost:9021 (login as superUser/superUser for full access)"
 echo -e "*****************************************************************************************************************\n"
+
+# Prometheus Stack
+
+echo -e "\nStarting Prometheus monitoring stack:"
+docker-compose up -d prometheus grafana node-exporter kafka-lag-exporter
+
+
